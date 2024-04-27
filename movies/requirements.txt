@@ -1,0 +1,16 @@
+redis==4.5.4
+elasticsearch[async]==7.9.1
+fastapi==0.92.0
+fastapi-limiter==0.1.6
+orjson==3.9.10
+pydantic==1.10.5
+python-dotenv==1.0.0
+pre-commit==3.6.0
+uvicorn==0.12.2
+fastapi-cache2[redis]==0.2.1
+pyjwt[crypto]==2.8.0
+uvloop==0.17.0
+opentelemetry-api==1.17.0
+opentelemetry-sdk==1.17.0
+opentelemetry-instrumentation-fastapi==0.38b0
+opentelemetry-exporter-jaeger==1.17.0

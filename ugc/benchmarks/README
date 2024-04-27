@@ -1,0 +1,53 @@
+Tests results:
+
+CLickhouse
+ - Insert test. Speed: 12,236.21 records/sec
+ - Select test. Speed: 158,817.09 records/sec
+
+Vertica
+ - Insert test. Speed: 18,855.72 records/sec
+ - Select test. Speed: 200,318.69 records/sec
+
+Postgres
+ - Reviews
+ -- Insert 50.000 reviews. Speed: 310 records/sec
+ -- Select 50.000 reviews. Speed: 42.303 records/sec
+ -- Update 50.000 reviews. Speed: 228 records/sec
+
+ - Bookmarks
+ -- Insert 50.000 bookmarks. Speed: 334 records/sec
+ -- Select 50.000 bookmarks. Speed: 45.083 records/sec
+
+ - Reviews ratings
+ -- Insert 50.000 review ratings. Speed: 308 records/sec
+ -- Select 1.500.000 review ratings. Speed: 45.752 records/sec
+
+
+Single Mongo
+ - Reviews
+ -- Insert 50.000 reviews. Speed: 1.023 records/sec
+ -- Select 50.000 reviews. Speed: 51.117 records/sec
+ -- Update 50.000 reviews. Speed: 934 records/sec
+
+ - Bookmarks
+ -- Insert 50.000 bookmarks: Speed: 1.1163 records/sec
+ -- Select 50.000 bookmarks: Speed:  72.812 records/sec
+
+ - Reviews ratings
+ -- Insert 50.000 reviews ratings: Speed: 1.171 records/sec
+ -- Select 50.000 reviews ratings: Speed: 85.498 records/sec
+
+
+Mongo cluster
+ - Reviews 
+ -- Insert 50.000 reviews. Speed:  291 records/sec
+ -- Select 100.000 reviews. Speed:  73968 records/sec
+ -- Update 50.000 reviews. Speed: 282 records/sec
+
+ - Bookmarks
+ -- Insert 50.000 bookmarks: Speed: 305 records/sec
+ -- Select 50.000 bookmarks: Speed:  89.049 records/sec
+
+ - Reviews ratings
+ -- Insert 50.000 reviews ratings: Speed: 285 records/sec
+ -- Select 50.000 reviews ratings: Speed: 98.695 records/sec

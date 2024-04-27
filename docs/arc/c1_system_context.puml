@@ -1,0 +1,15 @@
+@startuml system-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+Person(user, "User", "Гость, авторизированный пользователь, администратор и аналитик")
+
+Container(service, "Movies web site", ,"Поиск и просмотр фильмов, добавление и просмотр отзывов")
+Container_Ext(yandex_soc, "Yandex Social Network", ,"Аунтификация через аккаунт Яндекс")
+
+Rel(user, service,"Просмотр фильмов, получение информации о них")
+Rel(service, yandex_soc, "Получение информации о пользователе для подтверждения личности")
+Rel(user, yandex_soc, "Аунтификация")
+@enduml

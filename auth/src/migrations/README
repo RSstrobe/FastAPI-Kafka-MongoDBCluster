@@ -1,0 +1,4 @@
+# Применение миграций
+
+- Директория - `...\Auth_sprint_1\auth`
+- Команда - `alembic upgrade head`

@@ -1,0 +1,77 @@
+name: UGC service python application
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python 3.11
+        uses: actions/setup-python@v2
+        with:
+          python-version: 3.11
+
+      - name: Edit config
+        run: git config --global user.email "usikov.dv@gmail.com" && git config --global user.name "konarlook"
+
+      - name: Version patch
+        uses: justalemon/VersionPatcher@master
+        with:
+          version: 0.1.${{ github.run_number }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install wemake-python-styleguide
+
+          if [ -d ugc/tests ]; then
+            if [ -f ugc/tests/requirements.txt ]; then
+              pip install -r ugc/tests/requirements.txt;
+            fi;
+          fi
+
+          if [ -f requirements.txt ]; then
+            pip install -r requirements.txt;
+          fi
+
+      - name: Lint with Flake8
+        run: |
+          flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics
+          flake8 . --count --exit-zero --max-complexity=18 --max-line-length=127 --statistics
+
+      - name: Test with pytest
+        run: |
+          if [ cd ugc/tests ]; then
+            pytest ugc/tests/functional;
+          fi
+
+      - name: Telegram natification - PR create
+        uses: "appleboy/telegram-action@master"
+        if: github.event_name == 'pull_request' && github.event.action == 'opened'
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            !!! ${{ github.event.action }}
+            ${{ github.actor }} created new PR:
+            New #${{ github.run_id }} version publish
+            PR author: ${{ github.event.pull_request.user.login }}
+            PR (${{ github.event.pull_request.number }}) message:
+              ${{ github.pull_request.html_url}}
+
+      - name: Telegram natification - Push create
+        uses: "appleboy/telegram-action@master"
+        if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.merged == true
+        with:
+          to: ${{ secrets.TELEGRAM_CHAT_ID }}
+          token: ${{ secrets.TELEGRAM_TOKEN }}
+          message: |
+            !!! ${{ github.event.action }}
+            ${{ github.actor }} push to main:
+            New #${{ github.run_id }} version publish

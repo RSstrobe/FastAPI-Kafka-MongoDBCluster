@@ -1,0 +1,77 @@
+@startuml system-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+Person(admin, "Admin")
+Person(analyst, "Analyst")
+Person(user, "User")
+Person_Ext(anonim, "Anonymous User")
+
+System_Boundary(admin_panel, "Admin Panel") {
+    Container(web_app, "Admin Web App")
+    ContainerDb(movies_db, "Movies Database")
+    Container(etl_admin, "ETL Admin")
+}
+
+System_Boundary(auth_service, "Auth Service") {
+    ContainerDb(cache_auth_db, "Auth Cache DB")
+    ContainerDb(user_auth_db, "User Info DB")
+    Container(web_auth, "Web Auth App")
+}
+
+System_Boundary(movies_service, "Movies Service") {
+    ContainerDb(search_db, "Search Database")
+    ContainerDb(cache_db, "Cache Database")
+    Container(movies_app, "Movies Service")
+}
+
+System_Boundary(ugc_service, "UGC Service") {
+    Container(ugc_web_app, "UGC Web App")
+    ContainerDb(ugc_db_kafka, "Kafka")
+    ContainerDb(ugc_db_mongo, "MongoDB")
+    Container(ugc_etl_click_kafka, "ETL ClickHouse (Kafka)")
+    Container(ugc_etl_click_mongo, "ETL ClickHouse (MongoDB)")
+    ContainerDb(ClickHouse_db, "ClickHouse")
+}
+
+System_Ext(yandex_soc, "Yandex Social Network")
+
+Rel(web_app, movies_db, "", "Django ORM")
+Rel(etl_admin, movies_db, "")
+Rel(etl_admin, search_db, "")
+
+Rel(movies_app, cache_db, "")
+Rel(movies_app, search_db, "")
+
+Rel(web_auth, cache_auth_db, "Token Management (JWT)")
+Rel(web_auth, user_auth_db, "User Data Management")
+Rel(web_auth, yandex_soc, "OAuth2.0 (REST API)")
+
+Rel(web_app, web_auth, "Authentication Request (REST API)")
+
+Rel(user, web_auth, "")
+Rel(user, movies_app, "")
+
+Rel(anonim, web_auth, "")
+Rel(anonim, movies_app, "")
+
+Rel(admin, web_auth, "")
+Rel(admin, movies_app, "")
+Rel(admin, web_app, "")
+
+Rel(analyst, ClickHouse_db, "")
+
+Rel(user, ugc_web_app, "Timestamps, Likes, Comments, Bookmarks")
+Rel(admin, ugc_web_app, "")
+
+Rel(ugc_web_app, ugc_db_kafka, "")
+Rel(ugc_db_kafka, ugc_etl_click_kafka, "")
+Rel(ugc_etl_click_kafka, ClickHouse_db, "")
+
+Rel(ugc_web_app, ugc_db_mongo, "")
+Rel(ugc_db_mongo, ugc_etl_click_mongo, "")
+Rel(ugc_etl_click_mongo, ClickHouse_db, "")
+
+@enduml

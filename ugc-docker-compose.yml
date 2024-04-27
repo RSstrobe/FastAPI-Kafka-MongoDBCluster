@@ -1,0 +1,364 @@
+version: '3.9'
+
+services:
+
+  zookeeper:
+    image: zookeeper:3.8
+    container_name: zookeeper
+    hostname: zookeeper
+    networks:
+      - kafka_network
+
+  clickhouse-node1:
+    image: clickhouse/clickhouse-server:23
+    container_name: clickhouse-node1
+    hostname: clickhouse-node1
+    volumes:
+      - ./ugc/clickhouse_nodes/node1:/etc/clickhouse-server
+    depends_on:
+      - zookeeper
+    ports:
+      - "8123:8123"
+    networks:
+      - kafka_network
+
+  clickhouse-node2:
+    image: clickhouse/clickhouse-server:23
+    container_name: clickhouse-node2
+    hostname: clickhouse-node2
+    volumes:
+      - ./ugc/clickhouse_nodes/node2:/etc/clickhouse-server
+    depends_on:
+      - zookeeper
+    networks:
+      - kafka_network
+
+  clickhouse-node3:
+    image: clickhouse/clickhouse-server:23
+    container_name: clickhouse-node3
+    hostname: clickhouse-node3
+    volumes:
+      - ./ugc/clickhouse_nodes/node3:/etc/clickhouse-server
+    depends_on:
+      - zookeeper
+    networks:
+      - kafka_network
+
+  clickhouse-init:
+    build: ./ugc/clickhouse_init
+    container_name: clickhouse-init
+    env_file:
+      - .env
+    depends_on:
+      - zookeeper
+      - clickhouse-node1
+      - clickhouse-node2
+      - clickhouse-node3
+    networks:
+      - kafka_network
+
+  kafka-0:
+    image: bitnami/kafka:3.4
+    hostname: kafka_ugc
+    ports:
+      - "9094:9094"
+    depends_on:
+      - nginx
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_NODE_ID=0
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - KAFKA_KRAFT_CLUSTER_ID=${KAFKA_CLUSTER_ID}
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9094
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-0:9092,EXTERNAL://127.0.0.1:9094
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+    networks:
+      - kafka_network
+    volumes:
+      - kafka_0_data:/bitnami/kafka
+
+  kafka-1:
+    image: bitnami/kafka:3.4
+    ports:
+      - "9095:9095"
+    depends_on:
+      - nginx
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_NODE_ID=1
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - KAFKA_KRAFT_CLUSTER_ID=${KAFKA_CLUSTER_ID}
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9095
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-1:9092,EXTERNAL://127.0.0.1:9095
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+    networks:
+      - kafka_network
+    volumes:
+    - kafka_1_data:/bitnami/kafka
+
+  kafka-2:
+    image: bitnami/kafka:3.4
+    ports:
+      - "9096:9096"
+    depends_on:
+      - nginx
+    environment:
+      - KAFKA_ENABLE_KRAFT=yes
+      - ALLOW_PLAINTEXT_LISTENER=yes
+      - KAFKA_CFG_NODE_ID=2
+      - KAFKA_CFG_PROCESS_ROLES=broker,controller
+      - KAFKA_CFG_CONTROLLER_LISTENER_NAMES=CONTROLLER
+      - KAFKA_CFG_CONTROLLER_QUORUM_VOTERS=0@kafka-0:9093,1@kafka-1:9093,2@kafka-2:9093
+      - KAFKA_KRAFT_CLUSTER_ID=${KAFKA_CLUSTER_ID}
+      - KAFKA_CFG_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093,EXTERNAL://:9096
+      - KAFKA_CFG_ADVERTISED_LISTENERS=PLAINTEXT://kafka-2:9092,EXTERNAL://127.0.0.1:9096
+      - KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,EXTERNAL:PLAINTEXT,PLAINTEXT:PLAINTEXT
+    networks:
+      - kafka_network
+    volumes:
+      - kafka_2_data:/bitnami/kafka
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:v0.7.0
+    ports:
+      - "8080:8080"
+    environment:
+      - KAFKA_CLUSTERS_0_BOOTSTRAP_SERVERS=kafka-0:9092
+      - KAFKA_CLUSTERS_0_NAME=kraft
+    networks:
+      - kafka_network
+
+  ugc-service:
+    container_name: ugc_service
+    build: ./ugc
+    env_file: .env
+    volumes:
+      - ./src/logs/:/code/logs/
+    networks:
+      - kafka_network
+      - mongo_network
+    # ports:
+    #   - "5001:5001"
+    depends_on:
+      mongos1:
+        condition: service_started
+      setup_mongo_router_serv:
+        condition: service_completed_successfully
+
+  kafka-ch-etl:
+    build: ./ugc/etl_kafka_click
+    container_name: kafka-ch-etl
+    networks:
+      - kafka_network
+    env_file:
+      - .env
+    depends_on:
+      - kafka-0
+      - kafka-1
+      - kafka-2
+
+  mongo-ch-etl:
+    build: ./ugc/etl_mongo_click
+    container_name: mongo-ch-etl
+    networks:
+      - mongo_network
+      - kafka_network
+    env_file:
+      - .env
+    depends_on:
+      setup_mongo_router_serv:
+        condition: service_completed_successfully
+      clickhouse-init:
+        condition: service_completed_successfully
+
+  mongors1n1:
+    container_name: mongors1n1
+    image: mongo:7.0.8
+    command: mongod --shardsvr --replSet mongors1 --dbpath /data/db --port 27017
+    ports:
+      - 27017:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /tmp/mongo_cluster/data1:/data/db
+    networks:
+      - mongo_network
+
+  mongors1n2:
+    container_name: mongors1n2
+    image: mongo:7.0.8
+    command: mongod --shardsvr --replSet mongors1 --dbpath /data/db --port 27017
+    ports:
+      - 27027:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /tmp/mongo_cluster/data2:/data/db
+    networks:
+      - mongo_network
+
+  mongors1n3:
+    container_name: mongors1n3
+    image: mongo:7.0.8
+    command: mongod --shardsvr --replSet mongors1 --dbpath /data/db --port 27017
+    ports:
+      - 27037:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /tmp/mongo_cluster/data3:/data/db
+    networks:
+      - mongo_network
+
+  mongocfg1:
+    container_name: mongocfg1
+    image: mongo:7.0.8
+    command: mongod --configsvr --replSet mongors1conf --dbpath /data/db --port 27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - /tmp/mongo_cluster/config1:/data/db
+    networks:
+      - mongo_network
+
+  mongos1:
+    container_name: mongos1
+    image: mongo:7.0.8
+    depends_on:
+      - mongocfg1
+    command: mongos --configdb mongors1conf/mongocfg1:27017 --port 27017 --bind_ip_all
+    ports:
+      - 27019:27017
+    expose:
+      - "27017"
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    networks:
+      - mongo_network
+
+  setup_mongo_conf_serv:
+    image: mongo:7.0.8
+    networks:
+      - mongo_network
+    volumes:
+      - ./ugc/setup_mongo/manage_conf_serv.sh:/conf/manage_conf_serv.sh
+    command: [ "bash", "conf/manage_conf_serv.sh" ]
+    depends_on:
+      mongocfg1:
+        condition: service_started
+
+  setup_mongo_shard_serv:
+    image: mongo:7.0.8
+    networks:
+      - mongo_network
+    volumes:
+      - ./ugc/setup_mongo/manage_shard_serv.sh:/conf/manage_shard_serv.sh
+    command: [ "bash", "conf/manage_shard_serv.sh" ]
+    depends_on:
+      setup_mongo_conf_serv:
+        condition: service_completed_successfully
+      mongors1n1:
+        condition: service_started
+      mongors1n2:
+        condition: service_started
+      mongors1n3:
+        condition: service_started
+
+  setup_mongo_router_serv:
+    image: mongo:7.0.8
+    networks:
+      - mongo_network
+    volumes:
+      - ./ugc/setup_mongo/manage_router_add_shard.sh:/conf/manage_router_add_shard.sh
+    command: [ "bash", "conf/manage_router_add_shard.sh" ]
+    depends_on:
+      setup_mongo_shard_serv:
+        condition: service_completed_successfully
+      mongos1:
+        condition: service_started
+
+  logstash:
+    image: logstash:8.10.2
+    depends_on:
+      - elasticsearch
+    environment:
+      XPACK_MONITORING_ENABLED: "false"
+      ES_HOST: "elasticsearch:9200"
+    ports:
+      - "5044:5044/udp"
+    volumes:
+      - ./ugc/deploy/logstash.conf:/config/logstash.conf:ro
+    command: logstash -f /config/logstash.conf
+
+  elasticsearch:
+    image: elasticsearch:8.10.2
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - 9200:9200
+    volumes:
+      - ./ugc/deploy/esdata:/tmp/elasticsearch/data
+    mem_limit: 4G
+
+  kibana:
+    image: kibana:8.10.2
+    ports:
+      - "5601:5601"
+    environment:
+      - ELASTICSEARCH_HOSTS=http://elasticsearch:9200
+    depends_on:
+      - elasticsearch
+
+  nginx:
+    image: nginx:1.19.2
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/conf.d:/etc/nginx/conf.d:ro
+      - /tmp/logs/nginx/:/var/log/nginx/
+    depends_on:
+      - ugc-service
+    networks:
+      - kafka_network
+      - mongo_network
+    ports:
+      - 80:80
+
+  filebeat:
+    build:
+      context: ./ugc/filebeat
+    container_name: filebeat
+    volumes:
+      - ./src/logs/:/src/logs
+      - /tmp/logs/nginx:/var/log/nginx:ro
+    depends_on:
+      - elasticsearch
+      - kibana
+      - nginx
+      - logstash
+      - ugc-service
+
+volumes:
+  kafka_0_data:
+  kafka_1_data:
+  kafka_2_data:
+
+networks:
+  network_project:
+    driver: bridge
+  auth_network:
+    driver: bridge
+  kafka_network:
+    driver: bridge
+  mongo_network:
+    driver: bridge

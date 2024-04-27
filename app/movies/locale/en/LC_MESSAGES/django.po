@@ -1,0 +1,115 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2023-12-26 23:38+0300\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+#: .\movies\apps.py:8
+msgid "movies"
+msgstr ""
+
+#: .\movies\models.py:24
+msgid "name"
+msgstr ""
+
+#: .\movies\models.py:25 .\movies\models.py:55
+msgid "description"
+msgstr ""
+
+#: .\movies\models.py:29 .\movies\models.py:90
+msgid "Genre"
+msgstr ""
+
+#: .\movies\models.py:30 .\movies\models.py:91
+msgid "Genres"
+msgstr ""
+
+#: .\movies\models.py:37
+msgid "full_name"
+msgstr ""
+
+#: .\movies\models.py:41 .\movies\models.py:118
+msgid "Person"
+msgstr ""
+
+#: .\movies\models.py:42 .\movies\models.py:119
+msgid "Persons"
+msgstr ""
+
+#: .\movies\models.py:49
+msgid "MOVIE"
+msgstr ""
+
+#: .\movies\models.py:50
+msgid "tv_show"
+msgstr ""
+
+#: .\movies\models.py:54
+msgid "title"
+msgstr ""
+
+#: .\movies\models.py:56
+msgid "creation_date"
+msgstr ""
+
+#: .\movies\models.py:58
+msgid "rating"
+msgstr ""
+
+#: .\movies\models.py:63
+msgid "type"
+msgstr ""
+
+#: .\movies\models.py:64
+msgid "file"
+msgstr ""
+
+#: .\movies\models.py:71
+msgid "Film work"
+msgstr ""
+
+#: .\movies\models.py:72
+msgid "Film works"
+msgstr ""
+
+#: .\movies\models.py:80 .\movies\models.py:101
+msgid "film_work_key"
+msgstr ""
+
+#: .\movies\models.py:83
+msgid "genre_work_key"
+msgstr ""
+
+#: .\movies\models.py:96
+msgid "actor"
+msgstr ""
+
+#: .\movies\models.py:97
+msgid "director"
+msgstr ""
+
+#: .\movies\models.py:98
+msgid "writer"
+msgstr ""
+
+#: .\movies\models.py:104
+msgid "person_work_key"
+msgstr ""
+
+#: .\movies\models.py:107
+msgid "role"
+msgstr ""

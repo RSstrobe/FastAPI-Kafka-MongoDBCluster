@@ -1,0 +1,99 @@
+@startuml system-context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+LAYOUT_WITH_LEGEND()
+
+Person(user, "User")
+Person(analyst, "Analyst")
+
+System_Boundary(ugc_service, "UGC"){
+    together{
+        Container(player_event, "GetPlayerEvent")
+        Container(front_event, "GetFrontendEvent")
+        Container(post_review, "PostReview")
+        Container(add_to_favorites, "AddToFavorites")
+        Container(add_like_to_comment, "AddLikeToComment")
+        Container(read_review, "ReadReview")
+        Container(read_favorites, "ReadFavorites")
+        Container(read_user_reviews, "ReadUserReviews")
+        Container(edit_review, "EditReview")
+        Container(edit_like, "EditLike")
+        Container(remove_like_from_review, "RemoveLikeFromReview")
+        Container(remove_review, "RemoveReview")
+        Container(remove_from_favorites, "RemoveFromFavorites")
+    }
+
+    together{
+        Container(parser_player_event, "ParsingPlayerEvent")
+        Container(parser_frontend_event, "ParsingFrontendEvent")
+        Container(parser_postreview, "ParsingPostReview")
+        Container(parser_favorites, "ParsingFavorites")
+        Container(parser_liketocomment, "ParsingLikeToComment")
+        Container(parser_readreview, "ParsingReadReview")
+        Container(parser_readfavorites, "ParsingReadFavorites")
+        Container(parser_userreviews, "ParsingUserReviews")
+        Container(parser_editreview, "ParsingEditReview")
+        Container(parser_editlike, "ParsingEditLike")
+        Container(parser_removelike, "ParsingRemoveLike")
+        Container(parser_removereview, "ParsingRemoveReview")
+        Container(parser_removefavorites, "ParsingRemoveFavorites")
+    }
+
+    Container(broker, "Message-broker")
+    Container(ugc_etl, "UGC ETL")
+    Container(ugc_etl_mongo, "Mongo ETL")
+    ContainerDb(event_database, "Events database")
+    ContainerDb(mongo_database, "Mongo database")
+}
+
+Rel(user, front_event, "[JWT, URL, event_dt]")
+Rel(user, player_event, "[event_dt, event_type, *]")
+Rel(user, post_review, "[Text, Score, JWT, Movie_ID]")
+Rel(user, add_to_favorites, "[Movie_ID, JWT]")
+Rel(user, add_like_to_comment, "[Review_ID, Movie_ID, JWT]")
+Rel(user, read_review, "[Movie_ID]")
+Rel(user, read_favorites, "[JWT]")
+Rel(user, read_user_reviews, "[JWT]")
+Rel(user, edit_review, "[New_Text, New_Score, Movie_ID, Review_ID, JWT]")
+Rel(user, edit_like, "[New_Value, Movie_ID, Review_ID, JWT]")
+Rel(user, remove_like_from_review, "[Movie_ID, Review_ID, JWT]")
+Rel(user, remove_review, "[Movie_ID, Review_ID, JWT]")
+Rel(user, remove_from_favorites, "[Movie_ID, JWT]")
+
+Rel(post_review, parser_postreview, "")
+Rel(add_to_favorites, parser_favorites, "")
+Rel(add_like_to_comment, parser_liketocomment, "")
+Rel(read_review, parser_readreview, "")
+Rel(read_favorites, parser_readfavorites, "")
+Rel(read_user_reviews, parser_userreviews, "")
+Rel(edit_review, parser_editreview, "")
+Rel(edit_like, parser_editlike, "")
+Rel(remove_like_from_review, parser_removelike, "")
+Rel(remove_review, parser_removereview, "")
+Rel(remove_from_favorites, parser_removefavorites, "")
+
+Rel(parser_postreview, mongo_database, "")
+Rel(parser_favorites, mongo_database, "")
+Rel(parser_liketocomment, mongo_database, "")
+Rel(parser_readreview, mongo_database, "")
+Rel(parser_readfavorites, mongo_database, "")
+Rel(parser_userreviews, mongo_database, "")
+Rel(parser_editreview, mongo_database, "")
+Rel(parser_editlike, mongo_database, "")
+Rel(parser_removelike, mongo_database, "")
+Rel(parser_removereview, mongo_database, "")
+Rel(parser_removefavorites, mongo_database, "")
+
+Rel(mongo_database, ugc_etl_mongo, "")
+Rel(ugc_etl_mongo, event_database, "")
+
+Rel(player_event, parser_player_event, "")
+Rel(front_event, parser_frontend_event, "")
+Rel(parser_frontend_event, broker, "")
+Rel(parser_player_event, broker, "")
+Rel(broker, ugc_etl, "")
+Rel(ugc_etl, event_database, "")
+Rel(analyst, event_database, "")
+
+@enduml

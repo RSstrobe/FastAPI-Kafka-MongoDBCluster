@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+package auth;
+
+import "google/protobuf/timestamp.proto";
+
+service Auth {
+    /*Регистрация пользователя*/
+    rpc SignUp (SignUpRequest) returns (SignUpResponse) {};
+    /*Авторизация пользователя*/
+    rpc Login (LoginRequest) returns (LoginResponse) {};
+    /*Обновление refresh-токена*/
+    rpc TokenRefresh (TokenRefreshRequest) returns (TokenRefreshResponse) {};
+    /*Выход из аккаунта*/
+    rpc Logout (LogoutRequest) returns (LogoutResponse) {};
+}
+
+
+message SignUpRequest {
+    string email = 1;
+    optional string user_name = 2;
+    string password = 3;
+    optional string first_name = 4;
+    optional string last_name = 5;
+
+}
+
+message SignUpResponse {
+    string email = 1;
+    google.protobuf.Timestamp timestamp = 2;
+}
+
+message LoginRequest {
+    oneof login {
+        string email = 1;
+        string user_name = 2;
+    }
+    string password = 3;
+
+}
+
+message LoginResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+    google.protobuf.Timestamp timestamp = 3;
+}
+
+message TokenRefreshRequest {
+    string refresh_token = 1;
+}
+
+message TokenRefreshResponse {
+    string access_token = 1;
+    string refresh_token = 2;
+    google.protobuf.Timestamp timestamp = 3;
+}
+
+message LogoutRequest {
+    string access_token = 1;
+}
+
+message LogoutResponse {
+    google.protobuf.Timestamp timestamp = 2;
+}

@@ -1,0 +1,10 @@
+{
+  "topic_name": "player_settings_events",
+  "num_partitions": 3,
+  "replication_factor": 3,
+  "topic_configs": {
+    "retention.ms": "86400000",
+    "min.insync.replicas": "2",
+    "cleanup.policy": "delete"
+  }
+}

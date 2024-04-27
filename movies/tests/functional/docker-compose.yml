@@ -1,0 +1,67 @@
+version: "3"
+
+services:
+  elastic:
+    container_name: elastic-testing
+    image: elasticsearch:8.6.2
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - http.cors.enabled=true
+      - http.cors.allow-origin=http://localhost:8080
+    ports:
+      - "${ELASTIC_PORT}:${ELASTIC_PORT}"
+    networks:
+      - test_network
+
+  redis:
+    container_name: redis-testing
+    image: redis:latest
+    env_file: .env
+    environment:
+      REDIS_PASSWORD: "${REDIS_PASSWORD}"
+      REDIS_PORT: "${REDIS_PORT}"
+      REDIS_DATABASE: "${REDIS_DATABASES}"
+    ports:
+      - "${REDIS_PORT}:${REDIS_PORT}"
+    depends_on:
+      - fastapi
+      - elastic
+    networks:
+      - test_network
+
+  fastapi:
+    container_name: fastapi-testing
+    env_file: .env
+    build: ../../.
+    image: fastapi-movies
+    restart: "always"
+    expose:
+      - "${BACKEND_FASTAPI_PORT}"
+    networks:
+      - test_network
+
+  tests:
+    container_name: fastapi-tests
+    image: fastapi-movies
+    env_file: .env
+    environment:
+      PYTHONPATH: /opt:/opt/src
+      PROJECT_NAME: "movies-test"
+      SERVICE_DSN: "${BACKEND_FASTAPI_HOST}:${BACKEND_FASTAPI_PORT}"
+      ELASTIC_DSN: "http://elastic:${ELASTIC_PORT}"
+      REDIS_DSN: "http://redis:${REDIS_PORT}"
+    entrypoint: >
+      sh -c "pip install --no-cache-dir -r tests/functional/requirements.txt
+      && python tests/functional/utils/wait_for_es.py
+      && python tests/functional/utils/wait_for_redis.py
+      && pytest -p no:cacheprovider tests/functional/src"
+    depends_on:
+      - elastic
+      - redis
+      - fastapi
+    networks:
+      - test_network
+
+networks:
+  test_network:

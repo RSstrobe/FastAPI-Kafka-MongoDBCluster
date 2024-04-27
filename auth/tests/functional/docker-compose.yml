@@ -1,0 +1,66 @@
+version: "3"
+
+services:
+  postgres:
+    container_name: auth-postgres-testing
+    image: postgres:${POSTGRES_AUTH_VERSION}
+    env_file: .env
+    hostname: test_postgres_auth
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+    ports:
+      - "${AUTH_DB_PORT}:${AUTH_DB_PORT}"
+    networks:
+      - auth_test_network
+
+
+  redis:
+    container_name: auth-redis-testing
+    image: redis:latest
+    env_file: .env
+    environment:
+      REDIS_PASSWORD: "${AUTH_REDIS_PASSWORD}"
+      REDIS_PORT: "${AUTH_REDIS_PORT}"
+      REDIS_DATABASE: "${AUTH_REDIS_DATABASES}"
+    ports:
+      - "${AUTH_REDIS_PORT}:${AUTH_REDIS_PORT}"
+    networks:
+      - auth_test_network
+
+  auth:
+    container_name: auth-testing
+    env_file: .env
+    restart: on-failure
+    build: ../../.
+    image: auth-fastapi-test
+    ports:
+      - "8000:8000"
+    networks:
+      - auth_test_network
+    depends_on:
+      - postgres
+      - redis
+
+  tests:
+    container_name: auth-tests
+    image: auth-fastapi-test
+    env_file: .env
+    environment:
+      PROJECT_NAME: "auth-tests"
+      REDIS_DSN: "http://redis:${AUTH_REDIS_PORT}"
+    entrypoint: >
+      sh -c "pip install --no-cache-dir -r tests/functional/requirements.txt
+      && python tests/functional/utils/wait_for_postgres.py
+      && python tests/functional/utils/wait_for_redis.py
+      && pytest"
+    depends_on:
+      - postgres
+      - redis
+      - auth
+    networks:
+      - auth_test_network
+
+networks:
+  auth_test_network:
